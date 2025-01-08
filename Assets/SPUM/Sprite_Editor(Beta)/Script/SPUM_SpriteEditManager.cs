@@ -1,4 +1,6 @@
-﻿using System.Collections;
+#pragma warning disable
+//TODO: [이준형] 경고 무시창 제거하기
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
