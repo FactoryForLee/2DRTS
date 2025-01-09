@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System;
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "PresetData", menuName = "ScriptableObjects/SPUM_PresetData", order = 1)]
+[CreateAssetMenu(fileName = "PresetData", menuName = "Scriptable Objects/SPUM_PresetData", order = 1)]
 public class SPUM_PresetData : ScriptableObject
 {
     public List<SPUM_Preset> Presets;
