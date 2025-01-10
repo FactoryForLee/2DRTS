@@ -1,8 +1,33 @@
 using UnityEngine;
+using UnityEngine.Events;
 using Define;
+using System;
+using System.Collections.Generic;
 
-public abstract class Building : MonoBehaviour, IPoolObject
+public abstract class Building : MonoBehaviour
 {
-    [SerializeField] private int prefabKey;
-    public int PrefabKey => prefabKey;
+    private List<MapNode> bindedNodes = new List<MapNode>();
+
+    protected void OnEnable()
+    {
+        OnDeploy();
+    }
+
+    private void OnDeploy()
+    {
+        bindedNodes = GetBindNodes();
+
+        foreach (MapNode node in bindedNodes)
+            node.AssignBuilding(this);
+    }
+
+    protected abstract List<MapNode> GetBindNodes();
+
+    private void OnDisable()
+    {
+        foreach (MapNode node in bindedNodes)
+            node.RemoveBuilding();
+
+        bindedNodes.Clear();
+    }
 }
