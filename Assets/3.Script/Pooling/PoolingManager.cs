@@ -5,27 +5,28 @@ using Define;
 
 public class PoolingManager : MonoBehaviour
 {
-    [SerializeField] private BasePoolListSO poolingListSO;
-    private Queue<PoolingObject>[] buildingPool;
+    [SerializeField] protected BasePoolListSO poolingListSO;
+    public BasePoolListSO PoolingListSO => poolingListSO;
+    private Queue<PoolingObject>[] poolQueue_Arr;
 
-    private void Awake()
+    protected virtual void Awake()
     {
-        buildingPool = new Queue<PoolingObject>[poolingListSO.List.Count];
+        poolQueue_Arr = new Queue<PoolingObject>[poolingListSO.List.Count];
 
-        for (int i = 0; i < buildingPool.Length; i++)
-            buildingPool[i] = new Queue<PoolingObject>();
+        for (int i = 0; i < poolQueue_Arr.Length; i++)
+            poolQueue_Arr[i] = new Queue<PoolingObject>();
     }
 
-    public void PoolingObj(int index, Vector2 pos)
+    public void GetObjByPool(int index, Vector2 pos)
     {
-        if (!buildingPool[index].TryDequeue(out PoolingObject newBuilding))
+        if (!poolQueue_Arr[index].TryDequeue(out PoolingObject newBuilding))
         {
             newBuilding = Instantiate(poolingListSO.List[index], transform);
-            newBuilding.OnDisableAction += x => buildingPool[x.PrefabKey].Enqueue(x);
+            newBuilding.OnDisableAction += x => poolQueue_Arr[x.PrefabKey].Enqueue(x);
         }
 
         newBuilding.transform.position = pos;
         newBuilding.gameObject.SetActive(true);
-        buildingPool[index].Enqueue(newBuilding);
+        poolQueue_Arr[index].Enqueue(newBuilding);
     }
 }

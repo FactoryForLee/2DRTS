@@ -13,7 +13,8 @@ MonoBehaviour:
   m_Name: BuildingSO
   m_EditorClassIdentifier: 
   list:
-  - {fileID: -5428385473666732409, guid: 8e8ab3c325f78f54a979c409cc951642, type: 3}
-  - {fileID: -6077087455688447163, guid: 26b04cb2b11d69549a0e7189710a68e4, type: 3}
-  - {fileID: 7479062645951658463, guid: 65fc01e217ad91a4da90063c8f8022f3, type: 3}
-  - {fileID: -1200146353211401787, guid: 35c9573f6998f1f4db15b635f11f69da, type: 3}
+  - {fileID: -765274968608617303, guid: 4495c1bac17d6d64c8091c8acc10ac45, type: 3}
+  - {fileID: 2121730929253264271, guid: 840fe84488f2d7e4fb2a589bbf82f6b9, type: 3}
+  - {fileID: -4332917721994455857, guid: bc9e5d37fb2cdfc40b6b65efc9706385, type: 3}
+  - {fileID: 4127842753043696148, guid: 7cb043d01f186c44f9256ec53d954de5, type: 3}
+  - {fileID: -3544505848057989167, guid: e9dfd7c423cf253459e5a6fcc9b0043f, type: 3}

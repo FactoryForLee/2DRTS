@@ -12,8 +12,11 @@ public class MapNodeManager : Singleton<MapNodeManager>
 {
     [Tooltip("Must be place bigger than \'bottomRight\'`s Coordinate.")]
     [SerializeField] private Transform topRight;
+    private Vector2Int topRightPos;
     [Tooltip("Must be place smaller than \'bottomLeft\'`s Coordinate.")]
     [SerializeField] private Transform bottomLeft;
+    [field: SerializeField] private Grid grid;
+    private Vector2Int bottomLeftPos;
 
     [SerializeField] private LayerMask obstacleLayer;
     [SerializeField] private MapCostSO mapCostSO;
@@ -27,6 +30,17 @@ public class MapNodeManager : Singleton<MapNodeManager>
     {
         foreach (MapCostSO.CostByLayer costByLayer in mapCostSO.LayerCosts)
             Cost_Diction.Add(costByLayer.Layer, costByLayer.Cost);
+
+        topRightPos = Vector2Int.RoundToInt(topRight.position);
+        bottomLeftPos = Vector2Int.RoundToInt(bottomLeft.position);
+    }
+
+    public bool IsInMap(Vector2 pos)
+    {
+        return pos.x >= bottomLeftPos.x &&
+               pos.y >= bottomLeftPos.y &&
+               pos.x <= topRightPos.x &&
+               pos.y <= topRightPos.y;
     }
 
     #region 에디터에서의 노드 생성 로직
@@ -80,6 +94,11 @@ public class MapNodeManager : Singleton<MapNodeManager>
     private Vector2 GetPosByIndex(int xIndex, int yIndex)
     {
         return new Vector2(xIndex + bottomLeft.position.x, yIndex + bottomLeft.position.y);
+    }
+
+    public MapNode GetNodeByPos(Vector2Int worldPos)
+    {
+        return Maps[bottomLeftPos.y + worldPos.y].Arr[topRightPos.x + worldPos.x];
     }
 }
 

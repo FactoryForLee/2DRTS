@@ -15,14 +15,17 @@ namespace Define
         void RefillHP();
     }
 
-    public interface IPoolObject<T>
+    public interface IOwnKey<T>
     {
-        public int PrefabKey 
-        { 
+        public T PrefabKey
+        {
             get;
             set;
         }
+    }
 
+    public interface IPoolObject<T> : IOwnKey<int>
+    {
         public UnityAction<T> OnDisableAction
         {
             get;
@@ -46,4 +49,10 @@ namespace Define
         [SerializeField] private T[] arr;
         public T[] Arr => arr;
     }
+
+    /*
+     * Input은 해당 map을 가져오면 된다.
+     * InputSystem.actions.actionMaps[0] => Player Action
+     * InputSystem.actions.actionMaps[1] => Input Action
+     */
 }

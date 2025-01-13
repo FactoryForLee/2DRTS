@@ -11,6 +11,8 @@ GameObject:
   - component: {fileID: 1833568943503611214}
   - component: {fileID: 6562747393136815597}
   - component: {fileID: 3135495319776017646}
+  - component: {fileID: -7298236078110965350}
+  - component: {fileID: 4127842753043696148}
   m_Layer: 0
   m_Name: house_04
   m_TagString: Untagged
@@ -134,3 +136,29 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 4.0877204, y: 1.7451885}
   m_EdgeRadius: 0.1
+--- !u!114 &-7298236078110965350
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5165711096306083629}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8f80fbc90ca3e62499a98233349af7fc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  size: {x: 4.0877204, y: 1.7451885}
+--- !u!114 &4127842753043696148
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5165711096306083629}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 772dca4bb376bc045b24e993cf2e1b3e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  prefabKey: 3
