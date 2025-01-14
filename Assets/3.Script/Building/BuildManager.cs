@@ -1,10 +1,12 @@
 using UnityEngine;
+using System.Collections.Generic;
 using UnityEngine.Tilemaps;
 using UnityEngine.UI;
 
 public class BuildManager : PoolingManager
 {
     [SerializeField] private BuildingHoloUI holoUI;
+    private PlacementManager placement;
     [SerializeField] private Image panelUI;
     [SerializeField] private BuildSlotUI slotUIPrefab;
     [SerializeField] private GameObject gridSprite;
@@ -15,6 +17,8 @@ public class BuildManager : PoolingManager
     protected override void Awake()
     {
         base.Awake();
+        placement = holoUI.GetComponent<PlacementManager>();
+        placement.OnStartBuild.AddListener(StartBuild);
 
         foreach (PoolingObject item in poolingListSO.List)
         {
@@ -26,17 +30,29 @@ public class BuildManager : PoolingManager
 
             //각 버튼 데이터에 따른 Holo 활성화 로직
             ui.OnBtnUp.AddListener(() =>
-            {
-                EnableHoloUI(item.PrefabKey);
-                gridSprite.SetActive(true);
-            });
+                EnableHoloUI(poolingListSO.List[item.PrefabKey].GetComponent<Building>(), item.PrefabKey)
+            );
         }
     }
 
-    private void EnableHoloUI(int prefabKey)
+    private void EnableHoloUI(Building data, int prefabkey)
     {//빌딩 할당 후 홀로 활성화
-        Debug.Log("할당된 key = " + prefabKey);
-        holoUI.AssignBuidling(poolingListSO.List[prefabKey].GetComponent<Building>());
+        placement.prefabKey = prefabkey;
+        holoUI.AssignBuidling(data);
         holoUI.gameObject.SetActive(true);
+        gridSprite.SetActive(true);
+    }
+
+    private void StartBuild(int prefabIndex, Vector2 spawnPos, Queue<SpriteRenderer> nodePoses)
+    {
+        Building newBuilding = GetObjByPool(prefabIndex).GetComponent<Building>();
+        newBuilding.transform.position = spawnPos;
+
+        foreach (SpriteRenderer node in nodePoses)
+        {
+            MapNode bindNode = MapNodeManager.Instance.GetNodeByPos(Vector2Int.RoundToInt(node.transform.position));
+            newBuilding.bindedNodes.Add(bindNode);
+            bindNode.AssignBuilding(newBuilding);
+        }
     }
 }

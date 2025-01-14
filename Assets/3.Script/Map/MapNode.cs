@@ -4,19 +4,23 @@ using System;
 [Serializable]
 public class MapNode : MonoBehaviour
 {
-    public int Cost { get; private set; }
-    
-    public Building building { get; private set; }
+    public int Cost { get; private set; } = 0;
+
+    public Building Building { get; private set; }
+
+    public bool BuildingExist { get; private set; } = false;
 
     public void AssignBuilding(Building building)
     {
-        this.building = building;
+        this.Building = building;
+        BuildingExist = true;
         Cost = MapNodeManager.Instance.Cost_Diction[1 << building.gameObject.layer];
     }
 
     public void RemoveBuilding()
     {
-        building = null;
+        BuildingExist = false;
+        Building = null;
         Cost = 0;
     }
 

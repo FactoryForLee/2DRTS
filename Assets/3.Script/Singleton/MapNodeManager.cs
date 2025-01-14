@@ -1,7 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
 using UnityEditor;
-using UnityEngine.UIElements;
 using Define;
 
 /// <summary>
@@ -12,18 +11,17 @@ public class MapNodeManager : Singleton<MapNodeManager>
 {
     [Tooltip("Must be place bigger than \'bottomRight\'`s Coordinate.")]
     [SerializeField] private Transform topRight;
-    private Vector2Int topRightPos;
+    public Vector2Int topRightPos { get; private set; }
     [Tooltip("Must be place smaller than \'bottomLeft\'`s Coordinate.")]
     [SerializeField] private Transform bottomLeft;
-    [field: SerializeField] private Grid grid;
-    private Vector2Int bottomLeftPos;
+    public Vector2Int bottomLeftPos { get; private set; }
 
     [SerializeField] private LayerMask obstacleLayer;
     [SerializeField] private MapCostSO mapCostSO;
     [Tooltip("Key = LayerMask, Value = Cost | 건물의 Cost 접근을 위해")]
     public Dictionary<int, int> Cost_Diction { get; } = new Dictionary<int, int>();
 
-    [Tooltip("[y, x]")]
+    [Tooltip("Maps[i] == y, Arr[i] == x")]
     [field: SerializeField] public ArrayHolder<MapNode>[] Maps;
 
     protected override void Init()
@@ -37,10 +35,8 @@ public class MapNodeManager : Singleton<MapNodeManager>
 
     public bool IsInMap(Vector2 pos)
     {
-        return pos.x >= bottomLeftPos.x &&
-               pos.y >= bottomLeftPos.y &&
-               pos.x <= topRightPos.x &&
-               pos.y <= topRightPos.y;
+        return bottomLeftPos.x <= pos.x && pos.x <= topRightPos.x &&
+               bottomLeftPos.y <= pos.y && pos.y <= topRightPos.y;
     }
 
     #region 에디터에서의 노드 생성 로직
@@ -49,6 +45,7 @@ public class MapNodeManager : Singleton<MapNodeManager>
     {
         Vector2Int bounds = Vector2Int.RoundToInt(topRight.position - bottomLeft.position);
 
+        Debug.Log("y가 얼마길래 : " + bounds.y);
         Maps = new ArrayHolder<MapNode>[bounds.y + 1];
         Transform nodeParent = new GameObject("NodeParent").transform;
         nodeParent.position = Vector3.zero;
@@ -98,7 +95,12 @@ public class MapNodeManager : Singleton<MapNodeManager>
 
     public MapNode GetNodeByPos(Vector2Int worldPos)
     {
-        return Maps[bottomLeftPos.y + worldPos.y].Arr[topRightPos.x + worldPos.x];
+        return Maps[bottomLeftPos.y + worldPos.y].Arr[bottomLeftPos.x + worldPos.x];
+    }
+
+    public MapNode GetNodeByPos(int xpos, int ypos)
+    {
+        return Maps[bottomLeftPos.y + ypos].Arr[bottomLeftPos.x + xpos];
     }
 }
 

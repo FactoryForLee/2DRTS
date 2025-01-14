@@ -17,16 +17,16 @@ public class PoolingManager : MonoBehaviour
             poolQueue_Arr[i] = new Queue<PoolingObject>();
     }
 
-    public void GetObjByPool(int index, Vector2 pos)
+    public PoolingObject GetObjByPool(int index)
     {
-        if (!poolQueue_Arr[index].TryDequeue(out PoolingObject newBuilding))
+        if (!poolQueue_Arr[index].TryDequeue(out PoolingObject newObject))
         {
-            newBuilding = Instantiate(poolingListSO.List[index], transform);
-            newBuilding.OnDisableAction += x => poolQueue_Arr[x.PrefabKey].Enqueue(x);
+            newObject = Instantiate(poolingListSO.List[index], transform);
+            newObject.OnDisableAction += x => poolQueue_Arr[x.PrefabKey].Enqueue(x);
         }
 
-        newBuilding.transform.position = pos;
-        newBuilding.gameObject.SetActive(true);
-        poolQueue_Arr[index].Enqueue(newBuilding);
+        newObject.gameObject.SetActive(true);
+        poolQueue_Arr[index].Enqueue(newObject);
+        return newObject;
     }
 }
