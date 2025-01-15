@@ -3,24 +3,25 @@ using System;
 using Define;
 using System.Collections;
 
-public class Movement2D : MonoBehaviour
+[Serializable]
+public class Movement2D
 {
     [SerializeField] private float speed;
+    [SerializeField] private float defaultDistance;
+    [SerializeField] private float stopDistance;
 
-    public void SetPos(Vector2 dest)
-    {
-        StopCoroutine(MoveFixed_co(dest));
-        StartCoroutine(MoveFixed_co(dest));
-    }
+    public void AssignStopDistance(float distance) => stopDistance = distance;
+    public void ReturnSet() => stopDistance = defaultDistance;
+    
 
-    private IEnumerator MoveFixed_co(Vector3 dest)
+    public IEnumerator MoveFixed_co(Transform mover, Vector3 dest)
     {
         float lerpFactor = 0.0f;
-        Vector2 start = transform.position;
+        Vector2 start = mover.position;
 
-        while ((dest - transform.position).magnitude > 0.05f)
+        while ((dest - mover.position).magnitude > stopDistance)
         {
-            transform.position = Vector2.Lerp(start, dest, lerpFactor);
+            mover.position = Vector2.Lerp(start, dest, lerpFactor);
             lerpFactor += speed * Time.fixedDeltaTime;
             yield return StaticValues.waitForFixed;
         }

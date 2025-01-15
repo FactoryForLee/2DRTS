@@ -1,46 +1,64 @@
+using System;
 using UnityEngine;
+using UnityEngine.Events;
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 
-public class PathFinding : MonoBehaviour
+[Serializable]
+public class PathFinding
 {
-    [SerializeField] private Vector2Int bottomLeft, topRight;
+    [SerializeField] private Vector2Int bottomLeft;
+    [SerializeField] private Vector2Int topRight;
     [SerializeField] private bool canEnterWall;
+    public UnityAction<List<MapNode>> OnPathFinded;
+    public UnityAction OnStartFinding;
+    private Transform transform;
 
     public void ChangeWallEnterState(bool canEnterWall) => this.canEnterWall = canEnterWall;
 
     public bool IsPathPending { get; private set; } = false;
     private List<WeightNode> openList = new List<WeightNode>();
     private List<WeightNode> closeList = new List<WeightNode>();
-    public List<WeightNode> finalList { get; private set; } = new List<WeightNode>();
+    public List<MapNode> finalList { get; private set; } = new List<MapNode>();
 
+    private WeightNode startNode;
     private WeightNode curNode;
+    private WeightNode targetNode;
     private WeightNode[,] weightMap;
-    private UniTaskVoid taskCash;
 
-    private void Awake()
+    public PathFinding(Transform transform)
     {
-        bottomLeft = MapNodeManager.Instance.bottomLeftPos;
-        topRight = MapNodeManager.Instance.topRightPos;
+        this.transform = transform;
 
-        weightMap = new WeightNode[MapNodeManager.Instance.topRightPos.y - MapNodeManager.Instance.bottomLeftPos.y,
-                                  MapNodeManager.Instance.topRightPos.x - MapNodeManager.Instance.bottomLeftPos.x];
+        bottomLeft = MapNodeManager.Instance.bottomLeftPos;
+
+        weightMap = new WeightNode[MapNodeManager.Instance.topRightPos.y - MapNodeManager.Instance.bottomLeftPos.y + 1,
+                                  MapNodeManager.Instance.topRightPos.x - MapNodeManager.Instance.bottomLeftPos.x + 1];
 
         for (int i = 0; i < weightMap.GetLength(0); i++)//y
             for (int j = 0; j < weightMap.GetLength(1); j++)//x
                 weightMap[i, j] = new WeightNode(j + bottomLeft.y, i + bottomLeft.x);
     }
 
-    public void SetDestination(Vector2 pos)
+    public void GetPath(Vector2 pos)
     {
-        PathFind_Async(Vector2Int.RoundToInt(pos)).Forget();
+        if (IsPathPending) return;
+        pos.x = Mathf.Clamp(pos.x, bottomLeft.x, topRight.x);
+        pos.y = Mathf.Clamp(pos.y, bottomLeft.y, topRight.y);
+
+        targetNode = weightMap[Mathf.RoundToInt(pos.y), Mathf.RoundToInt(pos.x)];
+        startNode = weightMap[Mathf.RoundToInt(transform.position.y), Mathf.RoundToInt(transform.position.x)];
+
+        openList.Clear();
+        closeList.Clear();
+        finalList.Clear();
+        PathFind();
     }
 
-    private async UniTaskVoid PathFind_Async(Vector2Int targetPos)
+    private void PathFind()
     {
         IsPathPending = true;
-        Vector2Int startPos = Vector2Int.RoundToInt(transform.position);
-        openList.Add(weightMap[startPos.y - bottomLeft.y, startPos.x - bottomLeft.x]);
+        openList.Add(startNode);
 
         while (openList.Count > 0)
         {
@@ -55,6 +73,19 @@ public class PathFinding : MonoBehaviour
             openList.Remove(curNode);
             closeList.Add(curNode);
 
+            if (curNode.Equals(targetNode))
+            {
+                while (!curNode.Equals(startNode))
+                {
+                    finalList.Add(MapNodeManager.Instance.GetNodeByPos(curNode.x, curNode.y));
+                    curNode = curNode.prev;
+                }
+
+                finalList.Reverse();
+                OnPathFinded?.Invoke(finalList);
+                break;
+            }
+
             AddToOpenList(curNode.x + 1, curNode.y + 1);//우상
             AddToOpenList(curNode.x + 1, curNode.y - 1);//우하
             AddToOpenList(curNode.x - 1, curNode.y - 1);//좌하
@@ -66,7 +97,7 @@ public class PathFinding : MonoBehaviour
             AddToOpenList(curNode.x + 1, curNode.y);//우
         }
 
-        await UniTask.CompletedTask;
+        Debug.Log("Path Finding is Complete.");
         IsPathPending = false;
     }
 
@@ -78,8 +109,8 @@ public class PathFinding : MonoBehaviour
             checkY = ypos - bottomLeft.y;
 
         if (MapNodeManager.Instance.IsInMap(new Vector2(xpos, ypos)) &&//맵에 있는지
-            CheckWallOutCost(new Vector2Int(xpos, ypos)) &&//벽을 통과할 수 없다면 벽이 있는지
-            closeList.Contains(weightMap[checkY, checkX]))//닫힌 리스트에 노드가 들어있는지
+            CheckWallCost(new Vector2Int(xpos, ypos)) &&//벽을 통과할 수 없다면 벽이 있는지
+            !closeList.Contains(weightMap[checkY, checkX]))//닫힌 리스트에 노드가 들어있는지
         {
             int dirCost = (curNode.x - xpos) + (curNode.y - ypos) == 0 ? 10 : 14;
             dirCost += MapNodeManager.Instance.GetNodeByPos(xpos, ypos).Cost;
@@ -93,11 +124,11 @@ public class PathFinding : MonoBehaviour
 
     private int GetHeuristic(int xPos, int yPos)
     {
-        return Mathf.Abs(topRight.x - xPos) + Mathf.Abs(topRight.y - yPos);
+        return Mathf.Abs(targetNode.x - xPos) + Mathf.Abs(targetNode.y - yPos);
     }
 
 
-    private bool CheckWallOutCost(Vector2Int pos)
+    private bool CheckWallCost(Vector2Int pos)
     {
         return canEnterWall || MapNodeManager.Instance.GetNodeByPos(pos).Cost == 0;
     }
