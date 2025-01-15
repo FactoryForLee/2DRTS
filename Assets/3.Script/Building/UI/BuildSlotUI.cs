@@ -21,18 +21,21 @@ public class BuildSlotUI : MonoBehaviour, IOwnKey<int>, IPointerDownHandler, IPo
 
     public void OnPointerDown(PointerEventData eventData)
     {
+        if (eventData.selectedObject != gameObject) return;
         OnBtnDown?.Invoke();
         ChangeScale();
     }
 
     public void OnPointerUp(PointerEventData eventData)
     {
+        if (eventData.selectedObject != gameObject) return;
         ResetToNormal();
         OnBtnUp?.Invoke();
     }
 
     public void OnPointerExit(PointerEventData eventData)
     {
+        if (eventData.selectedObject != gameObject) return;
         ResetToNormal();
     }
 

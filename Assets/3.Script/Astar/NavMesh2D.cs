@@ -10,41 +10,41 @@ public class NavMesh2D : MonoBehaviour
     [SerializeField] private PathFinding path;
 
     [SerializeField] private float stoppingDistance;
+    [SerializeField] private float pathFindThresHold;
+
+    private float curThresHold;
     public UnityAction<MapNode> OnNodeHasBuilding;
     private Vector2 prevDest;
-    private bool isMoving;
 
     private void Start()
     {
         path = new PathFinding(transform);
         path.OnPathFinded += MoveToPath;
-        path.OnStartFinding += CancelMove;
     }
 
     public void SetDestination(Vector2 destination)
     {
-        if (!path.IsPathPending && !prevDest.Equals(destination))
-        {
-            Debug.Log("길 찾기 시작");
-            prevDest = destination;
-            path.GetPath(destination);
-        }
+        curThresHold += Time.deltaTime;
+
+        if (destination == prevDest ||
+            curThresHold < pathFindThresHold ||
+            movement.isMoving) return;
+
+        curThresHold = 0.0f;
+        prevDest = destination;
+        StopCoroutine(movement.MoveFixed_co(transform, destination));
+        prevDest = destination;
+        path.GetPath(destination);
     }
 
     private void MoveToPath(List<MapNode> path)
     {
-        StopCoroutine(MoveToPath_co(path));
         StartCoroutine(MoveToPath_co(path));
-    }
-
-    private void CancelMove()
-    {
-        StopCoroutine(MoveToPath_co(null));
     }
 
     private IEnumerator MoveToPath_co(List<MapNode> path)
     {
-        movement.ReturnSet();
+        movement.ResetStopDistance();
 
         for (int i = 0; i < path.Count; i++)
         {
@@ -66,13 +66,11 @@ public class NavMesh2D : MonoBehaviour
         if (path != null)
         {
             path.OnPathFinded += MoveToPath;
-            path.OnStartFinding += CancelMove;
         }
     }
 
     private void OnDisable()
     {
         path.OnPathFinded -= MoveToPath;
-        path.OnStartFinding -= CancelMove;
     }
 }

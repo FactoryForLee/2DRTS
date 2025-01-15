@@ -8,6 +8,8 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private NavMesh2D agent;
     [SerializeField] private Transform target;
 
+    private bool canTargetMove = true;
+
     private void Awake()
     {
         agent = GetComponent<NavMesh2D>();
@@ -16,8 +18,15 @@ public class PlayerController : MonoBehaviour
     private void Update()
     {
         agent.SetDestination(target.position);
-        Vector3Int newPos = Vector3Int.RoundToInt(InputManager.Instance.GetMousePos());
-        newPos.z = 0;
-        target.position = newPos;
+
+        if (Input.GetKeyDown(KeyCode.Escape))
+            canTargetMove = !canTargetMove;
+
+        if (canTargetMove)
+        {
+            Vector3Int newPos = Vector3Int.RoundToInt(InputManager.Instance.GetMousePos());
+            newPos.z = 0;
+            target.position = newPos;
+        }
     }
 }

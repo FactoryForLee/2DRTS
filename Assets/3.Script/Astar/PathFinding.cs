@@ -1,8 +1,9 @@
+using Define;
 using System;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Events;
 using System.Collections.Generic;
-using Cysharp.Threading.Tasks;
 
 [Serializable]
 public class PathFinding
@@ -10,16 +11,17 @@ public class PathFinding
     [SerializeField] private Vector2Int bottomLeft;
     [SerializeField] private Vector2Int topRight;
     [SerializeField] private bool canEnterWall;
+    [SerializeField] private bool loopBugTest = false;
     public UnityAction<List<MapNode>> OnPathFinded;
     public UnityAction OnStartFinding;
     private Transform transform;
 
     public void ChangeWallEnterState(bool canEnterWall) => this.canEnterWall = canEnterWall;
 
-    public bool IsPathPending { get; private set; } = false;
     private List<WeightNode> openList = new List<WeightNode>();
     private List<WeightNode> closeList = new List<WeightNode>();
     public List<MapNode> finalList { get; private set; } = new List<MapNode>();
+
 
     private WeightNode startNode;
     private WeightNode curNode;
@@ -31,33 +33,36 @@ public class PathFinding
         this.transform = transform;
 
         bottomLeft = MapNodeManager.Instance.bottomLeftPos;
+        topRight = MapNodeManager.Instance.topRightPos;
 
-        weightMap = new WeightNode[MapNodeManager.Instance.topRightPos.y - MapNodeManager.Instance.bottomLeftPos.y + 1,
-                                  MapNodeManager.Instance.topRightPos.x - MapNodeManager.Instance.bottomLeftPos.x + 1];
+        weightMap = new WeightNode[topRight.y - bottomLeft.y + 1, topRight.x - bottomLeft.x + 1];
 
         for (int i = 0; i < weightMap.GetLength(0); i++)//y
             for (int j = 0; j < weightMap.GetLength(1); j++)//x
-                weightMap[i, j] = new WeightNode(j + bottomLeft.y, i + bottomLeft.x);
+                weightMap[i,j] = new WeightNode(j + bottomLeft.x, i + bottomLeft.y);
     }
 
     public void GetPath(Vector2 pos)
     {
-        if (IsPathPending) return;
+        ClearWeightNodes(openList);
+        ClearWeightNodes(closeList);
+
+        foreach (MapNode node in finalList)
+            weightMap[Mathf.RoundToInt(node.transform.position.y),
+                Mathf.RoundToInt(node.transform.position.x)].ClearGnH();
+        finalList.Clear();
+
         pos.x = Mathf.Clamp(pos.x, bottomLeft.x, topRight.x);
         pos.y = Mathf.Clamp(pos.y, bottomLeft.y, topRight.y);
 
         targetNode = weightMap[Mathf.RoundToInt(pos.y), Mathf.RoundToInt(pos.x)];
         startNode = weightMap[Mathf.RoundToInt(transform.position.y), Mathf.RoundToInt(transform.position.x)];
-
-        openList.Clear();
-        closeList.Clear();
-        finalList.Clear();
+        
         PathFind();
     }
 
     private void PathFind()
     {
-        IsPathPending = true;
         openList.Add(startNode);
 
         while (openList.Count > 0)
@@ -73,16 +78,15 @@ public class PathFinding
             openList.Remove(curNode);
             closeList.Add(curNode);
 
-            if (curNode.Equals(targetNode))
+            if (curNode == targetNode)
             {
-                while (!curNode.Equals(startNode))
+                while (targetNode != startNode)
                 {
-                    finalList.Add(MapNodeManager.Instance.GetNodeByPos(curNode.x, curNode.y));
-                    curNode = curNode.prev;
+                    finalList.Add(MapNodeManager.Instance.GetNodeByPos(targetNode.x, targetNode.y));
+                    targetNode = targetNode.prev;
                 }
-
+            
                 finalList.Reverse();
-                OnPathFinded?.Invoke(finalList);
                 break;
             }
 
@@ -98,33 +102,46 @@ public class PathFinding
         }
 
         Debug.Log("Path Finding is Complete.");
-        IsPathPending = false;
+        OnPathFinded?.Invoke(finalList);
+        return;
     }
 
     private void AddToOpenList(int xpos, int ypos)
     {
         //맵 안에 있는지 그리고...닫힌 리스트에 있는지... 그리고... Iswall이 아닌지...근데 Iswall은 없지...
-
         int checkX = xpos - bottomLeft.x,
             checkY = ypos - bottomLeft.y;
+        Vector2 neighborPos = new Vector2(xpos, ypos);
 
-        if (MapNodeManager.Instance.IsInMap(new Vector2(xpos, ypos)) &&//맵에 있는지
-            CheckWallCost(new Vector2Int(xpos, ypos)) &&//벽을 통과할 수 없다면 벽이 있는지
+        if (MapNodeManager.Instance.IsInMap(neighborPos) &&//맵에 있는지
+            CheckWallCost(Vector2Int.RoundToInt(neighborPos)) &&//벽을 통과할 수 없다면 벽이 있는지
             !closeList.Contains(weightMap[checkY, checkX]))//닫힌 리스트에 노드가 들어있는지
         {
-            int dirCost = (curNode.x - xpos) + (curNode.y - ypos) == 0 ? 10 : 14;
-            dirCost += MapNodeManager.Instance.GetNodeByPos(xpos, ypos).Cost;
+            WeightNode neighborNode = weightMap[checkY, checkX];
+            int moveCost = curNode.G + ((curNode.x - xpos) == 0 || (curNode.y - ypos) == 0 ? 10 : 14);
 
-            weightMap[checkY, checkX].G = dirCost + curNode.G;
-            weightMap[checkY, checkX].H = GetHeuristic(xpos, ypos);
-            weightMap[checkY, checkX].prev = curNode;
-            openList.Add(weightMap[checkY, checkX]);
+            moveCost += MapNodeManager.Instance.GetNodeByPos(xpos, ypos).Cost;
+
+            if (moveCost < curNode.G || !openList.Contains(neighborNode))
+            {
+                weightMap[checkY, checkX].G = moveCost;
+                weightMap[checkY, checkX].H = GetHeuristic(neighborNode);
+                weightMap[checkY, checkX].prev = curNode;
+                openList.Add(weightMap[checkY, checkX]);
+            }
         }
     }
 
-    private int GetHeuristic(int xPos, int yPos)
+    private void ClearWeightNodes(List<WeightNode> nodes)
     {
-        return Mathf.Abs(targetNode.x - xPos) + Mathf.Abs(targetNode.y - yPos);
+        foreach (WeightNode node in nodes)
+            node.ClearGnH();
+        nodes.Clear();
+    }
+
+    private int GetHeuristic(WeightNode node)
+    {
+        return Mathf.Abs(targetNode.x - node.x) + Mathf.Abs(targetNode.y - node.y);
     }
 
 
@@ -140,6 +157,14 @@ public class WeightNode
     {
         this.y = y;
         this.x = x;
+        ClearGnH();
+    }
+
+    public void ClearGnH()
+    {
+        G = 0;
+        H = 0;
+        prev = null;
     }
 
     public int y, x;

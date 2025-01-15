@@ -4,11 +4,11 @@ using System;
 [Serializable]
 public class MapNode : MonoBehaviour
 {
-    public int Cost { get; private set; } = 0;
+    [field : SerializeField] public int Cost { get; private set; } = 0;
 
     public Building Building { get; private set; }
 
-    public bool BuildingExist { get; private set; } = false;
+    [field: SerializeField] public bool BuildingExist { get; private set; } = false;
 
     public void AssignBuilding(Building building)
     {
