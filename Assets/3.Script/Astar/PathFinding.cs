@@ -11,7 +11,6 @@ public class PathFinding
     [SerializeField] private Vector2Int bottomLeft;
     [SerializeField] private Vector2Int topRight;
     [SerializeField] private bool canEnterWall;
-    [SerializeField] private bool loopBugTest = false;
     public UnityAction<List<MapNode>> OnPathFinded;
     public UnityAction OnStartFinding;
     private Transform transform;
@@ -85,9 +84,11 @@ public class PathFinding
                     finalList.Add(MapNodeManager.Instance.GetNodeByPos(targetNode.x, targetNode.y));
                     targetNode = targetNode.prev;
                 }
-            
+                
                 finalList.Reverse();
-                break;
+                OnPathFinded?.Invoke(finalList);
+                Debug.Log("Path Finding is Complete.");
+                return;
             }
 
             AddToOpenList(curNode.x + 1, curNode.y + 1);//우상
@@ -101,8 +102,7 @@ public class PathFinding
             AddToOpenList(curNode.x + 1, curNode.y);//우
         }
 
-        Debug.Log("Path Finding is Complete.");
-        OnPathFinded?.Invoke(finalList);
+        Debug.Log("불완전한 길찾기.");
         return;
     }
 

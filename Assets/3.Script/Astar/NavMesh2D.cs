@@ -6,40 +6,36 @@ using UnityEngine.Events;
 
 public class NavMesh2D : MonoBehaviour
 {
-    [SerializeField] private Movement2D movement = new Movement2D();
+    [SerializeField] private Movement2D movement;
     [SerializeField] private PathFinding path;
-
     [SerializeField] private float stoppingDistance;
-    [SerializeField] private float pathFindThresHold;
 
-    private float curThresHold;
-    public UnityAction<MapNode> OnNodeHasBuilding;
+    public UnityAction<MapNode> OnNodeHasSomthing;
     private Vector2 prevDest;
+
+    private Coroutine movePath_coCash;
 
     private void Start()
     {
+        movement.rb = GetComponent<Rigidbody2D>();
         path = new PathFinding(transform);
         path.OnPathFinded += MoveToPath;
     }
 
     public void SetDestination(Vector2 destination)
     {
-        curThresHold += Time.deltaTime;
+        if (destination == prevDest) return;
 
-        if (destination == prevDest ||
-            curThresHold < pathFindThresHold ||
-            movement.isMoving) return;
-
-        curThresHold = 0.0f;
-        prevDest = destination;
-        StopCoroutine(movement.MoveFixed_co(transform, destination));
         prevDest = destination;
         path.GetPath(destination);
     }
 
     private void MoveToPath(List<MapNode> path)
     {
-        StartCoroutine(MoveToPath_co(path));
+        if (movePath_coCash != null)
+            StopCoroutine(movePath_coCash);
+
+        movePath_coCash = StartCoroutine(MoveToPath_co(path));
     }
 
     private IEnumerator MoveToPath_co(List<MapNode> path)
@@ -50,14 +46,14 @@ public class NavMesh2D : MonoBehaviour
         {
             if(path[i].Cost > 0)
             {
-                OnNodeHasBuilding?.Invoke(path[i]);
+                OnNodeHasSomthing?.Invoke(path[i]);
                 yield break;
             }
 
             if (i == path.Count - 1)
                 movement.AssignStopDistance(stoppingDistance);
 
-            yield return movement.MoveFixed_co(transform, path[i].transform.position);
+            yield return movement.MoveFixed_co(path[i].transform.position);
         }
     }
 
